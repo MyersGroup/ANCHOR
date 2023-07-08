@@ -75,7 +75,12 @@ anc.prob<-function(prob16){
 
 read.imp.anno<-function(HAPMIX_DATADIR,mcc=10){
     read.imp.chr.anno<-function(chr){
+        chr.anno.org<-read.table(paste0(HAPMIX_DATADIR,'/chr',chr,'_snpfile.ORIG'),as.is=T,header=F)
         chr.anno<-read.table(paste0(HAPMIX_DATADIR,'/chr',chr,'_snpfile'),as.is=T,header=F)
+		c1<-paste0(chr.anno.org[,2],':',chr.anno.org[,4],':',chr.anno.org[,5],':',chr.anno.org[,6])
+		c2<-paste0(chr.anno[,2],':',chr.anno[,4],':',chr.anno[,5],':',chr.anno[,6])
+		chr.anno.org$goodsnp<-c1%in%c2
+		chr.anno.org
     }
     all.anno<-do.call(rbind,mclapply(1:22,read.imp.chr.anno,mc.cores=mcc))
 }
@@ -108,7 +113,10 @@ read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,outp
             gn<-cbind(fd.pop12,fd.pop21,data.frame(geno=raw.geno),fd.anc)
         }))
     }
+	ria<-read.imp.anno(HAPMIX_DATADIR,mcc)
     bgb<-do.call(rbind,mclapply(1:22,get.batch,mc.cores=mcc))
+	bgb<-bgb[ria$goodsnp,]
+	saveRDS(ria[ria$goodsnp,],paste0(output.dir,'/SNP_annot.rds'))
     sp.ids<-sample.ind[,1]
 	pp.names<-c('pop11','pop12','pop22','pop21')
 	for(pp in 1:4){
@@ -120,11 +128,9 @@ read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,outp
 	colnames(rg)<-sp.ids
 	saveRDS(rg,paste0(output.dir,'/',basename(ADMIXINDFILE),'.rawgeno.rds'))
 	aa.names<-c('A11','A12','A22')
-	for(aa in 6:7){
+	for(aa in 6:8){
 		aa.sp<-bgb[,8*(0:n.sample)+aa]
 		colnames(aa.sp)<-sp.ids
-		saveRDS(aa.sp,paste0(output.dir,'/',basename(ADMIXINDFILE),'.',aa.names[aa],'.rds'))
+		saveRDS(aa.sp,paste0(output.dir,'/',basename(ADMIXINDFILE),'.',aa.names[aa-5],'.rds'))
 	}
-	ria<-read.imp.anno(HAPMIX_DATADIR,mcc)
-	saveRDS(ria,paste0(output.dir,'/SNP_annot.rds'))
 }

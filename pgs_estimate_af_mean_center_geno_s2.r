@@ -1,18 +1,25 @@
 library(parallel)
 
-ADMIXINDFILE<-''
-out.geno.dir<-''#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
-output.dir<-''#output directory to store the output
+ADMIXINDFILE<-'batch_1_38/data/sample_ind'
+out.geno.dir<-'test_s1'#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
+output.dir<-'test_s2'#output directory to store the output
 
 pgs.anno<-function(){
-	pgsanno<-readRDS(paste0(output.dir,'/SNP_annot.rds'))
+	pgsanno<-readRDS(paste0(out.geno.dir,'/SNP_annot.rds'))
 }
 if(!exists('s.anno')){
 	s.anno<-pgs.anno()
 }
 
-estimate_f<-function(mcc=12){
+if(!dir.exists(output.dir)){
+	dir.create(output.dir)
+}
+
+if(!exists('AFN')){
 	AFN<-basename(ADMIXINDFILE)
+}
+
+estimate_f<-function(mcc=12){
 	geno.info<-readRDS(paste0(out.geno.dir,'/',AFN,'.rawgeno.rds'))
 	anc.A11<-readRDS(paste0(out.geno.dir,'/',AFN,'.A11.rds'))
 	anc.A12<-readRDS(paste0(out.geno.dir,'/',AFN,'.A12.rds'))
@@ -49,9 +56,26 @@ if(!exists('fq')){
 		fq<-readRDS(paste0(out.geno.dir,'/pop1_pop2_Effect_allele_freq.rds'))
 	}
 }
+maf.thres=0.01
+
+if(!exists('filter.ids')){
+	pop1.maf<-pmin(fq$pop1.freq,1-fq$pop1.freq)
+	pop2.maf<-pmin(fq$pop2.freq,1-fq$pop2.freq)
+	filter.ids<-pop1.maf>maf.thres & pop2.maf>maf.thres
+}	
+
+if(!exists('fq.maf')){
+	if(!file.exists(paste0(out.geno.dir,'/pop1_pop2_Effect_allele_freq_maf.rds'))){
+		fq.maf<-fq[filter.ids,]
+		saveRDS(fq.maf,paste0(out.geno.dir,'/pop1_pop2_Effect_allele_freq_maf.rds'))
+	}
+	else{
+		fq.maf<-readRDS(paste0(out.geno.dir,'/pop1_pop2_Effect_allele_freq_maf.rds'))
+	}
+}
 
 mean.center.geno<-function(){
-	AFN<-basename(ADMIXINDFILE)
+	#AFN<-basename(ADMIXINDFILE)
 	geno.info<-readRDS(paste0(out.geno.dir,'/',AFN,'.rawgeno.rds'))
 	anc.A11<-readRDS(paste0(out.geno.dir,'/',AFN,'.A11.rds'))
 	anc.A12<-readRDS(paste0(out.geno.dir,'/',AFN,'.A12.rds'))
@@ -66,7 +90,7 @@ mean.center.geno<-function(){
 	anc.A12<-anc.A12/anc.sum
 	anc.A22<-1-anc.A11-anc.A12
 	ANC2<-anc.A12*0.5+anc.A22
-	ANC2.global<-colMeans(ANC2)#estimate global ancestry for POP2
+	ANC2.global<-colMeans(ANC2)[filter.ids]#estimate global ancestry for POP2
 	saveRDS(ANC2.global,paste0(output.dir,'/global_ANC_pop2.rds'))
 
 	geno.P11<-as.matrix(readRDS(paste0(out.geno.dir,'/',AFN,'.pop11.rds')))
@@ -77,19 +101,40 @@ mean.center.geno<-function(){
 	geno.P1<-geno.P11+geno.P12-(2*fq$pop1.freq*anc.A11+fq$pop1.freq*anc.A12)
 	geno.P2<-geno.P22+geno.P21-(2*fq$pop2.freq*anc.A22+fq$pop2.freq*anc.A12)
 	
-	saveRDS(geno.P1,paste0(out.geno.dir,'/',AFN,'.pop1.rds'))
-	saveRDS(geno.P2,paste0(out.geno.dir,'/',AFN,'.pop2.rds'))
+	saveRDS(geno.P1[filter.ids,],paste0(out.geno.dir,'/',AFN,'.pop1.rds'))
+	saveRDS(geno.P2[filter.ids,],paste0(out.geno.dir,'/',AFN,'.pop2.rds'))
 }
 
-cal.admix.pgs<-function(betafile,outpgs.prefix=NA){#betafile must have one column called "SNP" including SNP/variants ID, and one column called "BETA" including the BETA estimation from the internal/external source of gwas summary statistics
+align.beta<-function(beta.df){#beta.df should be a data frame
+	beta.ids.1<-paste0(beta.df$chr,':',beta.df$pos_grch37,':',beta.df$other_allele,':',beta.df$effect_allele)
+	beta.ids.2<-paste0(beta.df$chr,':',beta.df$pos_grch37,':',beta.df$effect_allele,':',beta.df$other_allele)
+	fq.maf.snp<-paste0(fq.maf[[2]],':',fq.maf[[4]],':',fq.maf[[5]],':',fq.maf[[6]])
+	
+	beta.df[beta.ids.2%in%fq.maf.snp,'BETA']<- -beta.df[beta.ids.2%in%fq.maf.snp,'BETA']#flip the effect size if the ref allele in fq is the effect allele
+	#swap the other/effect allele
+	beta.df.tmp<-beta.df[beta.ids.2%in%fq.maf.snp,'other_allele']
+	beta.df[beta.ids.2%in%fq.maf.snp,'other_allele']<-beta.df[beta.ids.2%in%fq.maf.snp,'effect_allele']
+	beta.df[beta.ids.2%in%fq.maf.snp,'effect_allele']<-beta.df.tmp
+	beta.df.match<-beta.df[beta.ids.1%in% fq.maf.snp | beta.ids.2%in% fq.maf.snp,]
+	beta.df.ids<-paste0(beta.df.match$chr,':',beta.df.match$pos_grch37,':',beta.df.match$other_allele,':',beta.df.match$effect_allele)
+	fq.beta.ids<-match(beta.df.ids,fq.maf.snp)
+	beta.list<-list(beta.ndf=beta.df.match,fq.beta.ids=fq.beta.ids)
+}
+
+cal.admix.pgs<-function(betafile,outpgs.prefix=NA){#betafile must have 4 columns: 'chr','pos_grch37','other_allele(non-effect allele)','effect_allele', and one column called "BETA" including the BETA estimation from the internal/external source of gwas summary statistics
+#User should also make sure the SNP column in the betafile has the following format: chr:pos_GRCh37:non_effect_allele:effect_allele
 	betas<-readRDS(betafile)
-	betas.in<-intersect(betas$SNP,fq$SNP)
-	beta<-betas[match(betas.in,betas$SNP),'BETA']
-	fq.ids<-match(betas.in,fq$SNP)
+	#fq.maf.snp<-paste0(fq.maf[[2]],':',fq.maf[[4]],':',fq.maf[[5]],':',fq.maf[[6]])
+	#betas.in<-intersect(betas$SNP,fq.maf.snp)
+	#beta<-betas[match(betas.in,betas$SNP),'BETA']
+	#fq.ids<-match(betas.in,fq$SNP)
+	fbb<-align.beta(betas)
+	beta<-fbb$beta.ndf$BETA
+	fq.ids<-fbb$fq.beta.ids
 	g.p1<-readRDS(paste0(out.geno.dir,'/',AFN,'.pop1.rds'))[fq.ids,]
 	g.p2<-readRDS(paste0(out.geno.dir,'/',AFN,'.pop2.rds'))[fq.ids,]
-	pgs.p1<-t(g.p1)*matrix(beta,ncol=1)
-	pgs.p2<-t(g.p2)*matrix(beta,ncol=1)
+	pgs.p1<-t(g.p1)%*%matrix(beta,ncol=1)
+	pgs.p2<-t(g.p2)%*%matrix(beta,ncol=1)
 	pgs<-data.frame(pgs.pop1=pgs.p1,pgs.pop2=pgs.p2)
 	if(is.na(outpgs.prefix)){
 		saveRDS(pgs,paste0(output.dir,'/',basename(betafile),'.admixpgs.rds'))
@@ -106,12 +151,16 @@ cal.external.pgs<-function(betafile,pop1.genofile,outpgs.prefix=NA){#betafile is
 #pop1.genofile should be MxP matrix where M is the number of markers (the same marker sets as the fq set, and should be stored in rds format 
 
 	betas<-readRDS(betafile)
-	betas.in<-intersect(betas$SNP,fq$SNP)
-	beta<-betas[match(betas.in,betas$SNP),'BETA']
-	fq.ids<-match(betas.in,fq$SNP)
+	#betas.in<-intersect(betas$SNP,fq$SNP)
+	#beta<-betas[match(betas.in,betas$SNP),'BETA']
+	#fq.ids<-match(betas.in,fq$SNP)
+	fbb<-align.beta(betas)
+	beta<-fbb$beta.ndf$BETA
+	fq.ids<-fbb$fq.beta.ids
+	
 	g.pop1<-readRDS(pop1.genofile)
 
-	pgs.pop1<-data.frame(pgs=t(g.pop1)*matrix(beta,ncol=1))
+	pgs.pop1<-data.frame(pgs=t(g.pop1)%*%matrix(beta,ncol=1))
 	if(is.na(outpgs.prefix)){
 		saveRDS(pgs.pop1,paste0(output.dir,'/',basename(betafile),'.pop1pgs.rds'))
 	}
