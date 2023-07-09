@@ -1,8 +1,22 @@
 library(parallel)
 
-ADMIXINDFILE<-''#'batch_1_38/data/sample_ind'
-out.geno.dir<-''#'test_s1'#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
-output.dir<-''#'test_s2'#output directory to store the output
+cc<-commandArgs(R)
+
+if(length(cc)==0){
+	print("We assume you would run this script within an R session")
+	print("Please provide the following files:")
+	print("ADMIXINDFILE=")
+	print("out.geno.dir=")
+	print("output.dir=")
+	print("betafile=")
+}
+else{
+	ADMIXINDFILE<-cc[1]#'batch_1_38/data/sample_ind'
+	out.geno.dir<-cc[2]#'test_s1'#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
+	output.dir<-cc[3]#'test_s2'#output directory to store the output
+	betafile<-cc[4]
+	pop1.genofile<-cc[5]
+}
 
 pgs.anno<-function(){
 	pgsanno<-readRDS(paste0(out.geno.dir,'/SNP_annot.rds'))
@@ -167,4 +181,11 @@ cal.external.pgs<-function(betafile,pop1.genofile,outpgs.prefix=NA){#betafile is
 	else{
 		saveRDS(pgs.pop1,paste0(output.dir,'/',outpgs.prefix,'.rds'))
 	}
+}
+
+if(length(cc)>0){
+	mc<-mean.center.geno()
+	admix.pgs<-cal.admix.pgs(betafile)
+	pop1.pgs<-cal.external.pgs(betafile,pop1.genofile)
+	q(save='no')
 }
