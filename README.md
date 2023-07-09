@@ -1,7 +1,7 @@
 # ANCHOR 
 An approach leveraging segments of distinct ancestries within individuals to estimate similarity in underlying causal effect sizes between two groups
 
-## read outfile from "HAPMIX"
+## Read output file from "HAPMIX"
 
 We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to genrate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
 
@@ -92,7 +92,7 @@ As the script "read_imp_hapmix_16prob_P4_s1.r", user can also run the script "pg
 Rscript AdmixIndFile /home/userA/hapmix_PGS /home/userA/mean_centered_geno "test_beta.rds" "pop1_geno.rds"
 ```
 
-## run ANCHOR to estimate effect size correlation between populations within the admixed samples
+## Run ANCHOR to estimate effect size correlation between populations within the admixed samples
 
 ANCHOR can leverage local ancestry information to estimate genetic correlation between samples without GWAS summary statistics from under-represent populations (POP2) in GWAS (e.g. African)."model_fitting_s3.r" is the main script for user to run ANCHOR method.
 
