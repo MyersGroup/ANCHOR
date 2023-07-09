@@ -103,7 +103,7 @@ Given the mandatory files provided, User can run the function "estimate.ratio" i
 ```r
 source('model_fitting_s3.r')
 es<-estimate.ratio()
-``
+```
 
 or run the script from commandline:
 
