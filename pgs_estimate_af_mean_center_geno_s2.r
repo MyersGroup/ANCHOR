@@ -1,8 +1,8 @@
 library(parallel)
 
-ADMIXINDFILE<-'batch_1_38/data/sample_ind'
-out.geno.dir<-'test_s1'#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
-output.dir<-'test_s2'#output directory to store the output
+ADMIXINDFILE<-''#'batch_1_38/data/sample_ind'
+out.geno.dir<-''#'test_s1'#this should be the output.dir in the function "read.imp4" defined in script "read_imp_hapmix_16prob_P4_s1.r"
+output.dir<-''#'test_s2'#output directory to store the output
 
 pgs.anno<-function(){
 	pgsanno<-readRDS(paste0(out.geno.dir,'/SNP_annot.rds'))
