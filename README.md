@@ -1,13 +1,29 @@
 # ANCHOR 
 An approach leveraging segments of distinct ancestries within individuals to estimate similarity in underlying causal effect sizes between two groups
 
+##read outfile from "HAPMIX"
 We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to genrate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
 
-Markup : * ADMIXINDFIE
-		 * OUTDIR (directory of hapmix output)
-		 * ADMIXPOP (hapmix output file prefix)
-		 * HAPMIX_MODE (diploid as default)
-		 * output.dir (store the output ancestry specific genotype and local ancestry files)
+* ADMIXINDFIE
+* OUTDIR (directory of hapmix output)
+* HAPMIX_DATADIR (directory of hapmix data directory)
+* ADMIXPOP (hapmix output file prefix)
+* HAPMIX_MODE (diploid as default)
+* output.dir (store the output ancestry specific genotype and local ancestry files)
+
+Suppose user's "hapmix" project at "/home/userA/hapmix_test" directory. "hapmix" sample id file is "/home/userA/hapmix_test/data/sample_ind";raw genotype/SNP files are at "/home/userA/hapmix_test/data/"; prefix of hapmix output file is  "AA" and HAPMIX_MODE is diploid (so the output file will be something like "AA.DIPLOID.19.20" where 19 is the chromosome number and 20 is the index of the 21st individuals (hapmix index start from 0);hapmix output path is "/home/userA/hapmix_test/output"; therefore, the variables within the script is:
+
+```r
+ADMIXINDFILE="/home/userA/hapmix_test/data/sample_ind"
+OUTDIR="/home/userA/hapmix_test/output"
+HAPMIX_DATADIR="/home/userA/hapmix_test/data/"
+ADMIXPOP="AA"
+HAPMIX_MODE="DIPLOID"
+output.dir="/home/userA/hapmix_PGS"
+mcc=12
+```
+
+Then user can run the command as follow to generate some important intermediate fileat specified folder "/home/userA/hapmix_PGS". User can also specify the number of cores via "mcc" to speed up the job
 
 Given the above files, user can run the function "read.imp4" either within an R session by sourcing the script as follows:
 
@@ -19,10 +35,10 @@ read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,outp
 Or use can run the script from the commandlines as follows:
 
 ```bash
-Rscript AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid test_dir 12
+Rscript AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid /home/userA/hapmix_PGS 12
 ```
 
-Result will be generated to the directory "test_dir"
+Result will be generated to the directory "/home/userA/hapmix_PGS"
 
 We also highly recommend user to "mean-center" the (ancestry) genotypes condition on local ancestry before conducting any further analysis, as we noticed that the non-mean-centered two ancestry genotypes are not independent and the effect size of PGS based on non-mean-centered genotypes will be biased by the ancestry (e.g. reduced estimated values for European effect size in individuals with high African ancestry.
 
@@ -30,31 +46,19 @@ If User has already used the "mean-centered" score or genotype,please ignore the
 
 ## (Mean-centered) Ancestry PGS construction
 
-As illustrated in our paper, we brought up an mean-centered ancestry PGS construction methods to deconvolute ordinary PGS into two independent ancestry PGSs (e.g. European and African PGS for European-African admixed populations).
+As illustrated in our paper Hu et al. 2023 , we brought up an mean-centered ancestry PGS construction methods to deconvolute ordinary PGS into two independent ancestry PGSs (e.g. European and African PGS for European-African admixed populations).
 
 Conventional approaches to construct such Ancestry PGSs will often lead to correlation between the PGS, and therefore make the results not robust. Our method, however, can correct the potential collinearity between the ancestry PGSs by introducing so-called *Mean-centering* technique to remove the correlation between the ancestry PGSs. 
 
-To construct the mean-centered PGS, please use the function built in the script "generate_mean_centered_PGS.r". 
-
-We would expect the user to run "hapmix" (diploid mode) (detail can be seen at "hapmix" paper) before using this script, and our script expect output from "hapmix"
-
-Suppose user generated "hapmix" output at "/home/userA/hapmix_test" directory. "hapmix" sample id file is "/home/userA/data/sample_ind", "HAPMIX_MODE" for "hapmix" is "deploid" and admixed population is "ADMIXPOP"="EU_AF", then user can first open an R session and source the script as follows:
+To construct the mean-centered PGS, please use the function built in the script "pgs_estimate_af_mean_center_geno_s2.r". 
 
 ```r
-source('generate_mean_centered_PGS.r')
-``` 
-
-Then user can run the command as follow to generate some important intermediate fileat specified folder "/home/userA/hapmix_PGS". User can also specify the number of cores to be used to speed up the job
-
-```r
-ri<-read.imp4("/home/userA/hapmix_test/data/sample_ind","/home/userA/hapmix_test/out/","EU_AF","diploid","/home/userA/hapmix_PGS",10)
+source('pgs_estimate_af_mean_center_geno_s2.r')
 ```
 
-Afterwards, user can call function "estimate_f" to generate the effect allele frequency between two populations:
+User also need to provide some arguments to run the scripts, including "ADMIXINDFILE" which is the same as mentioned above, and "out.geno.dir" is the "output.dir" used in the above script (example directory:/home/userA/hapmix_PGS). User also need to provide the output directory "output.dir" and external gwas summary statistics file "betafile" to run this script  
 
-```r
-fq<-estimate_f()
-```
+Afterwards, a built-in function "estimate_f" will be called to generate the effect allele frequency between two populations, and the estimated allele frequency will be store in R variable "fq":
 
 To "mean-centered" genotypes (so as to PGS), the user should run the following function:
 
@@ -62,10 +66,27 @@ To "mean-centered" genotypes (so as to PGS), the user should run the following f
 mcg<-mean.center.geno()
 ```
 
-By providing a table including the effect size estimation from other GWAS analysis, in which there must be a column called "SNP" and "BETA", user can generate their own ancestry PGS as follows():
+The "betafile" is a table including the effect size estimated from other GWAS analysis, which should includes the following columns: 'chr','pos_grch37','other_allele(non-effect allele)','effect_allele', and one column called "BETA" including the BETA estimation from the internal/external source of gwas summary statistics. 
+
+The script will try to align the gwas summary statistics and user's genotype file when user generates their own ancestry PGS as follows():
 
 ```r
-my.pgs<-cal.pgs('height_beta.rds')
+admix.pgs<-cal.admix.pgs('height_beta.rds')
+```
+
+To generate the observed "PGS" (generated in the sample population as the population from which the GWAS was conducted), user need to provide 
+"pop1.genofile" which is the same format as the ancestry genotype file.
+
+Then user can generate the PGS for POP1 which has the same ancestry as the population where GWAS was conducted
+
+```r
+pop1.pgs<-cal.external.pgs(betafile,pop1.genofile)
 ```
 
 Please bear in mind that we expect the input table should be in ".rds" format. If user's original file is plain text table, user can read it into R and use "saveRDS" function to convert the format of the original table.
+
+As the script "read_imp_hapmix_16prob_P4_s1.r", user can also run the script "pgs_estimate_af_mean_center_geno_s2.r" in the commandline:
+
+```bash
+Rscript AdmixIndFile /home/userA/hapmix_PGS /home/userA/mean_centered_geno "test_beta.rds" "pop1_geno.rds"
+```

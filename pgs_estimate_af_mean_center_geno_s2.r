@@ -9,6 +9,7 @@ if(length(cc)==0){
 	print("out.geno.dir=")
 	print("output.dir=")
 	print("betafile=")
+	print("pop1.genofile=")
 }
 else{
 	ADMIXINDFILE<-cc[1]#'batch_1_38/data/sample_ind'
