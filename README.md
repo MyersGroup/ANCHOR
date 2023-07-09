@@ -1,7 +1,30 @@
 # ANCHOR 
 An approach leveraging segments of distinct ancestries within individuals to estimate similarity in underlying causal effect sizes between two groups
 
-We highly recommend user to "mean-center" the (ancestry) genotypes condition on local ancestry before conducting any further analysis, as we noticed that the non-mean-centered two ancestry genotypes are not independent and the effect size of PGS based on non-mean-centered genotypes will be biased by the ancestry (e.g. reduced estimated values for European effect size in individuals with high African ancestry.
+We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to genrate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
+
+Markup : * ADMIXINDFIE
+		 * OUTDIR (directory of hapmix output)
+		 * ADMIXPOP (hapmix output file prefix)
+		 * HAPMIX_MODE (diploid as default)
+		 * output.dir (store the output ancestry specific genotype and local ancestry files)
+
+Given the above files, user can run the function "read.imp4" either within an R session by sourcing the script as follows:
+
+```r
+source('read_imp_hapmix_16prob_P4_s1.r')
+read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,output.dir,mcc=16)
+``` 
+
+Or use can run the script from the commandlines as follows:
+
+```bash
+Rscript AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid test_dir 12
+```
+
+Result will be generated to the directory "test_dir"
+
+We also highly recommend user to "mean-center" the (ancestry) genotypes condition on local ancestry before conducting any further analysis, as we noticed that the non-mean-centered two ancestry genotypes are not independent and the effect size of PGS based on non-mean-centered genotypes will be biased by the ancestry (e.g. reduced estimated values for European effect size in individuals with high African ancestry.
 
 If User has already used the "mean-centered" score or genotype,please ignore the following section.
 

@@ -1,5 +1,38 @@
 library(parallel)
 
+cc<-commandArgs(T)
+
+if(length(cc)==0){
+	print("We assume you would run this script within an R session")
+	print("Please provide the following files:")
+	print("ADMIXINDFIE=")
+	print("OUTDIR=")
+	print("HAPMIX_DATADIR=")
+	print("ADMIXPOP")
+	print("HAPMIX_MODE")
+	print("output.dir")
+	print("mcc=")
+}
+else{
+	ADMIXINDFIE=cc[1]
+	OUTDIR=cc[2]
+	HAPMIX_DATADIR=cc[3]
+	ADMIXPOP=cc[4]
+	HAPMIX_MODE=cc[5]
+	output.dir=cc[6]
+	mcc=as.integer(cc[7])
+}
+
+if(!exists('mcc') || is.na(mcc)){
+	mcc=12
+}
+
+#ADMIXINDFIE: individuals sample ID file
+#OUTDIR: directory of hapmix output 
+#ADMIXPOP:hapmix output file prefix
+#HAPMIX_MODE: diploid as default 
+#output.dir: store the output of this function 
+
 column.map<-function(p1,h1,p2,h2){
     #p:{0,1} h:{0,1}
     col<-sum(c(p1,h1,p2,h2)*2^(3:0))+1
@@ -92,7 +125,8 @@ read.imp.anno<-function(HAPMIX_DATADIR,mcc=10){
 #HAPMIX_MODE: diploid as default 
 #output.dir: store the output of this function 
  
-read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,output.dir,mcc=16){
+#read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,output.dir,mcc=16){
+read.imp4<-function(){
 	#input arguments are exactly the same as input configuration file for Hapmix (.par file) except the output.dir, which specified by user 
 	if(!dir.exists(output.dir)){
 		dir.create(output.dir)
@@ -133,4 +167,9 @@ read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,outp
 		colnames(aa.sp)<-sp.ids
 		saveRDS(aa.sp,paste0(output.dir,'/',basename(ADMIXINDFILE),'.',aa.names[aa-5],'.rds'))
 	}
+}
+
+if(length(cc)>0){
+	r4<-read.imp4()
+	q(save='no')
 }
