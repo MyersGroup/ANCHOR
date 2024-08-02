@@ -3,7 +3,7 @@ An approach leveraging segments of distinct ancestries within individuals to est
 
 ## Read output file from "HAPMIX"
 
-We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to genrate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
+We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to generate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
 
 * ADMIXINDFIE
 * OUTDIR (directory of hapmix output)
@@ -24,7 +24,7 @@ output.dir="/home/userA/hapmix_PGS"
 mcc=12
 ```
 
-Then user can run the command as follow to generate some important intermediate fileat specified folder "/home/userA/hapmix_PGS". User can also specify the number of cores via "mcc" to speed up the job
+Then user can run the command as follow to generate some important intermediate file at specified folder "/home/userA/hapmix_PGS". User can also specify the number of cores via "mcc" to speed up the job
 
 Given the above files, user can run the function "read.imp4" either within an R session by sourcing the script as follows:
 
@@ -33,7 +33,7 @@ source('read_imp_hapmix_16prob_P4_s1.r')
 read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,output.dir,mcc=16)
 ``` 
 
-Or use can run the script from the commandlines as follows:
+Or use can run the script from the command lines as follows:
 
 ```bash
 Rscript AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid /home/userA/hapmix_PGS 12
@@ -43,7 +43,7 @@ Result will be generated to the directory "/home/userA/hapmix_PGS"
 
 We also highly recommend user to "mean-center" the (ancestry) genotypes condition on local ancestry before conducting any further analysis, as we noticed that the non-mean-centered two ancestry genotypes are not independent and the effect size of PGS based on non-mean-centered genotypes will be biased by the ancestry (e.g. reduced estimated values for European effect size in individuals with high African ancestry.
 
-If User has already used the "mean-centered" score or genotype,please ignore the following section.
+If user has already used the "mean-centered" score or genotype, please ignore the following section.
 
 ## (Mean-centered) Ancestry PGS construction
 
@@ -59,7 +59,7 @@ source('pgs_estimate_af_mean_center_geno_s2.r')
 
 User also need to provide some arguments to run the scripts, including "ADMIXINDFILE" which is the same as mentioned above, and "out.geno.dir" is the "output.dir" used in the above script (example directory:/home/userA/hapmix_PGS). User also need to provide the output directory "output.dir" and external gwas summary statistics file "betafile" to run this script  
 
-Afterwards, a built-in function "estimate_f" will be called to generate the effect allele frequency between two populations, and the estimated allele frequency will be store in R variable "fq":
+Afterwards, a built-in function "estimate_f" will be called to generate the effect allele frequency between two populations, and the estimated allele frequency will be stored in R variable "fq":
 
 To "mean-centered" genotypes (so as to PGS), the user should run the following function:
 
@@ -86,7 +86,7 @@ pop1.pgs<-cal.external.pgs(betafile,pop1.genofile)
 
 Please bear in mind that we expect the input table should be in ".rds" format. If user's original file is plain text table, user can read it into R and use "saveRDS" function to convert the format of the original table.
 
-As the script "read_imp_hapmix_16prob_P4_s1.r", user can also run the script "pgs_estimate_af_mean_center_geno_s2.r" in the commandline:
+As the script "read_imp_hapmix_16prob_P4_s1.r", user can also run the script "pgs_estimate_af_mean_center_geno_s2.r" in the command line:
 
 ```bash
 Rscript AdmixIndFile /home/userA/hapmix_PGS /home/userA/mean_centered_geno "test_beta.rds" "pop1_geno.rds"
@@ -114,4 +114,4 @@ Rscript model_fitting_s3.r pop1.pheno.file pop1.covar.file pop1.pgs.file admix.p
 
 ## Bug report
 
-If user comes across any problem,please email leunghom@gmail.com and we will help to resolve the problem
+If user comes across any problem, please email leunghom@gmail.com and we will help to resolve the problem
