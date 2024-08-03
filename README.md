@@ -3,7 +3,7 @@ An approach leveraging segments of distinct ancestries within individuals to est
 
 ## Read output file from "HAPMIX"
 
-We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "read_imp_hapmix_16prob_P4_s1.r" to generate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
+We recommend user to use "HAPMIX" to infer the local ancestry. If user already used "HAPMIX" and generated the output, you can use the R script: "src/read_imp_hapmix_16prob_P4_s1.r" to generate ancestry specific genotypes (pop1 and pop2, pop1 should be the population on which the GWAS (effect size) was conducted). User need to provide the same arguments as what user specified in the "HAPMIX" configuration file.
 
 * ADMIXINDFIE
 * OUTDIR (directory of hapmix output)
@@ -29,14 +29,14 @@ Then user can run the command as follow to generate some important intermediate 
 Given the above files, user can run the function "read.imp4" either within an R session by sourcing the script as follows:
 
 ```r
-source('read_imp_hapmix_16prob_P4_s1.r')
+source('src/read_imp_hapmix_16prob_P4_s1.r')
 read.imp4<-function(ADMIXINDFILE,OUTDIR,ADMIXPOP,HAPMIX_DATADIR,HAPMIX_MODE,output.dir,mcc=16)
 ``` 
 
 Or use can run the script from the command lines as follows:
 
 ```bash
-Rscript AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid /home/userA/hapmix_PGS 12
+Rscript src/read_imp_hapmix_16prob_P4_s1.r AdmixIndFile HapmixOutDir HapmixDataDir AdmixPop Diploid /home/userA/hapmix_PGS 12
 ```
 
 Result will be generated to the directory "/home/userA/hapmix_PGS"
@@ -86,29 +86,29 @@ pop1.pgs<-cal.external.pgs(betafile,pop1.genofile)
 
 Please bear in mind that we expect the input table should be in ".rds" format. If user's original file is plain text table, user can read it into R and use "saveRDS" function to convert the format of the original table.
 
-As the script "read_imp_hapmix_16prob_P4_s1.r", user can also run the script "pgs_estimate_af_mean_center_geno_s2.r" in the command line:
+As the script "src/read_imp_hapmix_16prob_P4_s1.r", user can also run the script "src/pgs_estimate_af_mean_center_geno_s2.r" in the command line:
 
 ```bash
-Rscript AdmixIndFile /home/userA/hapmix_PGS /home/userA/mean_centered_geno "test_beta.rds" "pop1_geno.rds"
+Rscript src/pgs_estimate_af_mean_center_geno_s2.r AdmixIndFile /home/userA/hapmix_PGS /home/userA/mean_centered_geno "test_beta.rds" "pop1_geno.rds"
 ```
 
 ## Run ANCHOR to estimate effect size correlation between populations within the admixed samples
 
-ANCHOR can leverage local ancestry information to estimate genetic correlation between samples without GWAS summary statistics from under-represent populations (POP2) in GWAS (e.g. African)."model_fitting_s3.r" is the main script for user to run ANCHOR method.
+ANCHOR can leverage local ancestry information to estimate genetic correlation between samples without GWAS summary statistics from under-represent populations (POP2) in GWAS (e.g. African)."src/model_fitting_s3.r" is the main script for user to run ANCHOR method.
 
 To run the ANCHOR method, user need to prepare the ancestry specific PGS either self-generated or using our tools. User also need to provide phenotype, any covariates (age, sex and global ancestry etc.), as well as PGS for external/POP1 where GWAS summary stats comes from, and the phenotype and covariates files (should be same to make sure the result robust). Therefore, user should provide 6 mandatory files: "pop1.pheno.file","pop1.covar.file","pop1.pgs.file","admix.pheno.file","admix.covar.file" and "admix.pgs.file". In addition, user may provide global ancestry for POP2 (if user want to fit model to predict the effect size of PGS in POP1 and POP2 with different global ancestry of POP2) file "admix.anc.file". As the confidence interval is estimated by bootstrap method, user can specify the number of bootstrap iteration, while the default value is 1000. User can also specify the output file for ratio(correlation) estimate otherwise there will be a file "ratio_estimate.rds" automatically generated at the folder where the user run this script.
 
 Given the mandatory files provided, User can run the function "estimate.ratio" in an R session:
 
 ```r
-source('model_fitting_s3.r')
+source('src/model_fitting_s3.r')
 es<-estimate.ratio()
 ```
 
 or run the script from commandline:
 
 ```bash
-Rscript model_fitting_s3.r pop1.pheno.file pop1.covar.file pop1.pgs.file admix.pheno.file admix.covar.file admix.pgs.file" 
+Rscript src/model_fitting_s3.r pop1.pheno.file pop1.covar.file pop1.pgs.file admix.pheno.file admix.covar.file admix.pgs.file" 
 ```
 
 

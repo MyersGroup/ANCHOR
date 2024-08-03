@@ -136,7 +136,18 @@ read.imp4<-function(){
  	if(!dir.exists(OUTDIR)){
 		stop(paste0('error: directory:',OUTDIR,' does not exist!'))
 	}
-    
+   	geno.bychr.dir<-paste0(output.dir,'/imp_geno/')
+	anc.bychr.dir<-paste0(output.dir,'/imp_anc/')
+	if(!dir.exists(geno.bychr.dir)){
+		dir.create(geno.bychr.dir)
+	}
+	if(!dir.exists(anc.bychr.dir)){
+		dir.create(anc.bychr.dir)
+	}
+    sp.ids<-sample.ind[,1]
+	ria<-read.imp.anno(HAPMIX_DATADIR,mcc)
+	saveRDS(ria[ria$goodsnp,],paste0(output.dir,'/SNP_annot.rds'))
+	
 	get.batch<-function(chr){
         get.anc.geno<-do.call(cbind,lapply(0:n.sample,function(i){
             fd<-read.table(paste0(OUTDIR,'/',ADMIXPOP,'.',HAPMIX_MODE,'.',i,'.',chr),as.is=T,header=F)
@@ -146,27 +157,27 @@ read.imp4<-function(){
 			fd.anc<-anc.prob(fd)
             gn<-cbind(fd.pop12,fd.pop21,data.frame(geno=raw.geno),fd.anc)
         }))
+		chr.anno<-ria[ria[[2]]==chr,]
+		chr.ids<-chr.anno$goodsnp
+		pp.names<-c('pop11','pop12','pop22','pop21')
+		for(pp in 1:4){
+			pp.sp<-get.anc.geno[chr.ids,8*(0:n.sample)+pp]
+			colnames(pp.sp)<-sp.ids
+    		saveRDS(pp.sp,paste0(geno.bychr.dir,'/',basename(ADMIXINDFILE),'.',pp.names[pp],'.chr',chr,'.rds'))
+		}
+		rg<-get.anc.geno[chr.ids,8*(0:n.sample)+5]
+		colnames(rg)<-sp.ids
+		saveRDS(rg,paste0(geno.bychr.dir,'/',basename(ADMIXINDFILE),'.rawgeno.chr',chr,'.rds'))
+		aa.names<-c('A11','A12','A22')
+		for(aa in 6:8){
+			aa.sp<-get.anc.geno[chr.ids,8*(0:n.sample)+aa]
+			colnames(aa.sp)<-sp.ids
+			saveRDS(aa.sp,paste0(anc.bychr.dir,'/',basename(ADMIXINDFILE),'.',aa.names[aa-5],'.chr',chr,'.rds'))
+		}
     }
-	ria<-read.imp.anno(HAPMIX_DATADIR,mcc)
-    bgb<-do.call(rbind,mclapply(1:22,get.batch,mc.cores=mcc))
-	bgb<-bgb[ria$goodsnp,]
-	saveRDS(ria[ria$goodsnp,],paste0(output.dir,'/SNP_annot.rds'))
-    sp.ids<-sample.ind[,1]
-	pp.names<-c('pop11','pop12','pop22','pop21')
-	for(pp in 1:4){
-		pp.sp<-bgb[,8*(0:n.sample)+pp]
-		colnames(pp.sp)<-sp.ids
-    	saveRDS(pp.sp,paste0(output.dir,'/',basename(ADMIXINDFILE),'.',pp.names[pp],'.rds'))
-	}
-	rg<-bgb[,8*(0:n.sample)+5]
-	colnames(rg)<-sp.ids
-	saveRDS(rg,paste0(output.dir,'/',basename(ADMIXINDFILE),'.rawgeno.rds'))
-	aa.names<-c('A11','A12','A22')
-	for(aa in 6:8){
-		aa.sp<-bgb[,8*(0:n.sample)+aa]
-		colnames(aa.sp)<-sp.ids
-		saveRDS(aa.sp,paste0(output.dir,'/',basename(ADMIXINDFILE),'.',aa.names[aa-5],'.rds'))
-	}
+    #bgb<-do.call(rbind,mclapply(1:22,get.batch,mc.cores=mcc))
+	#bgb<-bgb[ria$goodsnp,]
+	bgb<-mclapply(1:22,get.batch,mc.cores=mcc)
 }
 
 if(length(cc)>0){
