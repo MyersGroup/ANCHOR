@@ -51,10 +51,17 @@ As illustrated in our paper Hu et al. 2023 , we brought up an mean-centered ance
 
 Conventional approaches to construct such Ancestry PGSs will often lead to correlation between the PGS, and therefore make the results not robust. Our method, however, can correct the potential collinearity between the ancestry PGSs by introducing so-called *Mean-centering* technique to remove the correlation between the ancestry PGSs. 
 
+In addition, we also highly recommend the user to mask the short or uncertain regions. The reasons are:
+
+1. Our method is based on the assumption that "ancestry LD" is longer than the normal LD
+2. Although the masking/unmasking results are very consitent in our simulation, we found masking help reduce the downward bias for a few of traits in the UKB real phenotypes, especially when you have some samples have almost homogeneous pop2 ancestry (e.g. >97.5% African ancestry). Centain samples should be treated as "non-admixed" samples, but sometimes "HAPMIX" may still infer some "pop1" (e.g. European) segements from those samples, which essentially will bias the estimation
+3. User should avoid including such samples with extremely high proportion of "pop2" ancestry (e.g. African ancestry >95% or 97.5%), and apply both the mean-centering and masking together
+4. The default masking length is 5MB (2.5MB from the central variant towards each direction), simulatin results shows this setting works very well. User can also give other setting, but please make sure the masking length is larger than 1MB (as we assume ancestry LD larger than normal LD).
+
 To construct the mean-centered PGS, please use the function built in the script "pgs_estimate_af_mean_center_geno_s2.r". 
 
 ```r
-source('pgs_estimate_af_mean_center_geno_s2.r')
+source('src/pgs_estimate_af_mean_center_geno_s2.r')
 ```
 
 User also need to provide some arguments to run the scripts, including "ADMIXINDFILE" which is the same as mentioned above, and "out.geno.dir" is the "output.dir" used in the above script (example directory:/home/userA/hapmix_PGS). User also need to provide the output directory "output.dir" and external gwas summary statistics file "betafile" to run this script  
